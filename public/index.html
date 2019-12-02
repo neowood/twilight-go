@@ -19,7 +19,7 @@
 		crossorigin="anonymous"></script>
 
 	<link rel="stylesheet" href="css/styles/toolstrip.css" />
-	<script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/build/ol.js"></script>
+	<script src="http://openlayers.org/en/v3.20.1/build/ol.js"></script>
 	<script type="text/javascript" src="js/map.js"></script>
 </head>
 
@@ -38,10 +38,7 @@
 			</select>
 			<input type="text" id="tbLonLat" class="form-control2">
 			<button id="btnLocate" class="btn btn-primary" onclick="LocatePoint()">Locate</button>
-			<button id="btnRefreshPos" class="btn btn-primary" onclick="RefreshPos()">RefreshPos</button>
-			<button id="btnClearAll" class="btn btn-primary" onclick="ClearAll()">Clear</button>
-			<button id="btnStartStop" class="btn btn-primary" onclick="StartStopTracing()">Start Tracing</button>
-			<label><input type="checkbox" id="ckbShowTrack" onclick="ShowTrack()">Show Track</label>
+			<button id="btnRefresh" class="btn btn-primary" onclick="RefreshPos()">Refresh</button>
 			<label id="mouse-position"></label>
 		</div>
 	</div>
