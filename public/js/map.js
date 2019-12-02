@@ -3,7 +3,7 @@ var osm, twilightlayer, customMarkerlayer,markerlayer, gaodelayer, binglayer;
 var customMarkerSource = new ol.source.Vector({});
 var markerSource = new ol.source.Vector({});
 var twilightSource = new ol.source.Vector({});
-var pointArray = [];
+var twilightPointArray = [];
 var sunPosX, sunPosY;
 var twilightStyle, customMarkerStyle,markerStyle;
 function initMap() {
@@ -84,16 +84,17 @@ function initMap() {
         source: customMarkerSource,
         style: customMarkerStyle
     });
+
     //twilight points
-    UpdateTwilightPoints()
+    RefreshPos();
 
     map = new ol.Map({
         controls: ol.control.defaults({
         }).extend([mousePositionControl]),
         layers: [
             osm,
-            gaodelayer,
-            binglayer,
+            //gaodelayer,
+            //binglayer,
             twilightlayer,
             markerlayer,
             customMarkerlayer
@@ -105,6 +106,15 @@ function initMap() {
             zoom: 2
         })
     });
+
+}
+
+function CenterAt(lon,lat)
+{
+    var zoom=map.getView().getZoom();
+    map.getView().setCenter(ol.proj.transform([lon,lat],
+        'EPSG:4326', 'EPSG:3857'));
+    map.getView().setZoom(zoom);
 }
 
 function UpdateTwilightPoints() {
@@ -120,59 +130,36 @@ function UpdateTwilightPoints() {
         .then((resp) => resp.json()) // Transform the data into json
         .then(function (data) {
             // Create and append the li's to the ul
-            pointArray = [];
+            twilightPointArray = [];
             data.forEach(AddToTwilightPoints)
         })
 }
 
 function AddToTwilightPoints(p) {
-    pointArray.push([p.X, p.Y])
+    twilightPointArray.push([p.X, p.Y])
 }
 
-function LocatePoint() {
-    //split input
-    var lonlat = tbLonLat.value.split(",");
-    if (lonlat.length != 2) {
-        console.log("invaild coordinate!");
-        return;
-    }
 
-    var cmbformat = document.getElementById('coordformat');
-
-    if (cmbformat.selectedIndex == 1) {
-        lonlat = lonlat.reverse();
-    }
-    //console.log(lonlat);
-    //zoom to point
-    var lon = parseFloat(lonlat[0]);
-    var lat = parseFloat(lonlat[1]);
-    //CenterAt(lon, lat);
-    AddMarkerPoint(lon, lat);
-}
-
-function ClearTrackPoints() {
+function ClearTwilightPoints() {
     twilightSource.clear();
-    pointSource.clear();
-    pointArray = [];
+    markerSource.clear();
 }
 
-function ClearPointLayer() {
-    pointSource.clear();
+function ClearMarkerPoints() {
+    customMarkerSource.clear()
 }
 
-function ShowTrack() {
+function ShowTwilightLine() {
     //generate a line from pointSource
     var feature = new ol.Feature({
-        geometry: new ol.geom.Polygon([pointArray]),
+        geometry: new ol.geom.Polygon([twilightPointArray]),
         style: twilightStyle
     });
     feature.getGeometry().transform('EPSG:4326', 'EPSG:3857');
     twilightSource.addFeature(feature);
-
-    AddSunPos()
 }
 
-function AddSunPos(){
+function ShowSunPos(){
     var marker = new ol.Feature({
         geometry: new ol.geom.Point(
             ol.proj.transform(
@@ -186,27 +173,7 @@ function AddSunPos(){
 }
 
 function AddMarkerPoint(lon, lat) {
-    ClearMarkerPoints();
-    //style
-    var style = new ol.style.Style({
-        image: new ol.style.Circle({
-            radius: 8,
-            stroke: new ol.style.Stroke({
-                color: '#000'
-            }),
-            fill: new ol.style.Fill({
-                color: "rgba(230, 0, 0, 0.5)",
-            })
-        }),
-        text: new ol.style.Text({
-            text: lon + "," + lat, // attribute code
-            offsetY: 18,
-            fill: new ol.style.Fill({
-                color: "#000" // black text // TODO: Unless circle is dark, then white..
-            })
-        })
-    });
-    // Create the feature
+    //ClearMarkerPoints();
     var marker = new ol.Feature({
         geometry: new ol.geom.Point(
             ol.proj.transform(
@@ -215,17 +182,20 @@ function AddMarkerPoint(lon, lat) {
         )
     });
 
-    // Set style created earlier
-    //marker.setStyle(style);
-
-    // Assuming your layer / source is already map bound
-    //var source = markerlayer.getSource();
-    //source.addFeatures(marker);
     customMarkerSource.addFeature(marker);
 }
 
-function ClearMarkerPoints() {
-    customMarkerSource.clear();
+function RefreshPos() {
+    console.log("refreshing pos")
+    ClearAll()
+    UpdateTwilightPoints()
+    ShowTwilightLine()
+    ShowSunPos()
+}
+
+function ClearAll() {
+    ClearTwilightPoints();
+    ClearMarkerPoints();
 }
 
 function backgroundChange(e) {
@@ -256,13 +226,23 @@ function backgroundChange(e) {
     }
 }
 
-function RefreshPos() {
-    //ClearTrackPoints();
-    //GetCurPos();
-    ShowTrack();
-}
+function LocatePoint() {
+    //split input
+    var lonlat = tbLonLat.value.split(",");
+    if (lonlat.length != 2) {
+        console.log("invaild coordinate!");
+        return;
+    }
 
-function ClearAll() {
-    ClearTrackPoints();
-    ClearMarkerPoints();
+    var cmbformat = document.getElementById('coordformat');
+
+    if (cmbformat.selectedIndex == 1) {
+        lonlat = lonlat.reverse();
+    }
+    //console.log(lonlat);
+    //zoom to point
+    var lon = parseFloat(lonlat[0]);
+    var lat = parseFloat(lonlat[1]);
+    //CenterAt(lon, lat);
+    AddMarkerPoint(lon, lat);
 }

@@ -33,7 +33,6 @@ func UserRoutes() *mux.Router {
 func GetSunPosHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	sunpos := GetSunPosNow()
-	log.Println(*sunpos)
 	json.NewEncoder(w).Encode(sunpos)
 }
 
