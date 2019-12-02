@@ -2,6 +2,7 @@ package main
 
 import (
 	"math"
+	"sort"
 )
 
 const EPOCH_JAN1_12H_2000 = 2451545.0
@@ -128,93 +129,102 @@ func GetSunPos(year, // i.e., 2004
 	hour, // 0..23
 	min int, // 0..59
 	sec float64 /* = 0.0 */) *Point { // 0..(59.999999...)
-	{
-		twopi := 2.0 * PI
-		deg2rad := PI / 180.0
-		var tut1, meanlong, ttdb, meananomaly, eclplong, obliquity, magr, dbi, dbj, dbk float64
-		jul := JulianDate(year, mon, day, hour, min, sec) //UTC time
-		gmst := toGMST(jul)
+	twopi := 2.0 * PI
+	deg2rad := PI / 180.0
+	var tut1, meanlong, ttdb, meananomaly, eclplong, obliquity, magr, dbi, dbj, dbk float64
+	jul := JulianDate(year, mon, day, hour, min, sec) //UTC time
+	gmst := toGMST(jul)
 
-		tut1 = (jul - 2451545.0) / 36525.0
-		meanlong = 280.460 + 36000.77*tut1
-		meanlong = Mod(meanlong, 360.0)
-		ttdb = tut1
-		meananomaly = 357.5277233 + 35999.05034*ttdb
-		meananomaly = Mod(meananomaly*deg2rad, twopi)
-		if meananomaly < 0.0 {
-			meananomaly += twopi
-		}
-		eclplong = meanlong + 1.914666471*math.Sin(meananomaly) + 0.019994643*math.Sin(2.0*meananomaly)
-		obliquity = 23.439291 - 0.0130042*ttdb
-		meanlong = meanlong * deg2rad
-		if meanlong < 0.0 {
-			meanlong = twopi + meanlong
-		}
-		eclplong = eclplong * deg2rad
-		obliquity = obliquity * deg2rad
-		magr = 1.000140612 - 0.016708617*math.Cos(meananomaly) - 0.000139589*math.Cos(2.0*meananomaly)
-		//计算得出太阳的地心坐标系坐标
-		dbi = magr * math.Cos(eclplong)
-		dbj = magr * math.Cos(obliquity) * math.Sin(eclplong)
-		dbk = magr * math.Sin(obliquity) * math.Sin(eclplong)
+	tut1 = (jul - 2451545.0) / 36525.0
+	meanlong = 280.460 + 36000.77*tut1
+	meanlong = Mod(meanlong, 360.0)
+	ttdb = tut1
+	meananomaly = 357.5277233 + 35999.05034*ttdb
+	meananomaly = Mod(meananomaly*deg2rad, twopi)
+	if meananomaly < 0.0 {
+		meananomaly += twopi
+	}
+	eclplong = meanlong + 1.914666471*math.Sin(meananomaly) + 0.019994643*math.Sin(2.0*meananomaly)
+	obliquity = 23.439291 - 0.0130042*ttdb
+	meanlong = meanlong * deg2rad
+	if meanlong < 0.0 {
+		meanlong = twopi + meanlong
+	}
+	eclplong = eclplong * deg2rad
+	obliquity = obliquity * deg2rad
+	magr = 1.000140612 - 0.016708617*math.Cos(meananomaly) - 0.000139589*math.Cos(2.0*meananomaly)
+	//计算得出太阳的地心坐标系坐标
+	dbi = magr * math.Cos(eclplong)
+	dbj = magr * math.Cos(obliquity) * math.Sin(eclplong)
+	dbk = magr * math.Sin(obliquity) * math.Sin(eclplong)
 
-		//convert to geo
-		eciPoint := Point{
-			X: dbi * XKMPER,
-			Y: dbj * XKMPER,
-			Z: dbk * XKMPER,
-		}
-
-		return toGeo(&eciPoint, gmst)
+	//convert to geo
+	eciPoint := Point{
+		X: dbi * XKMPER,
+		Y: dbj * XKMPER,
+		Z: dbk * XKMPER,
 	}
 
-	/*
-		public List<Point> GetTwilightLine ()
-		{
-			return GetTwilightLine (GetSunPos ())
-		}
+	return toGeo(&eciPoint, gmst)
+}
 
-		List<Point> GetTwilightLine (Point sunpos)
-		{
-			double LonS, LatS, LonA, LatA, LonB, LatB, ANB, BN, sita
-			LonS = sunpos.X * PI / 180
-			LatS = -sunpos.Y * PI / 180
-			LonA = LonS - PI / 2
-			LatA = 0
-			List<Point> line = new List<Point> ()
-			int i = 0
-			for (i = 0 i < 360; i++) {
-				sita = (i + 0.001) * PI / 180
-				BN = Acos (Sin (sita) * Cos (LatS))//(0~pi之间)
-				double danb = Sin (LatS) * Sin (sita) / Sin (BN)
-				ANB = Asin (danb)//(-pi/2 ~ pi/2之间)
-				if (i > 90 && i < 270) {
-					LonB = LonA + PI - ANB
-					LonB = LonB > PI ? LonB - 2 * PI : LonB
-					LonB = LonB < -PI ? 2 * PI + LonB : LonB
-					LatB = PI / 2 - BN
-				} else {
-					LonB = LonA + ANB
-					LatB = PI / 2 - BN
-				}
-				Point c = new Point ()
-				c.X = LonB * 180 / PI
-				c.Y = LatB * 180 / PI
-				line.Add (c)
-			}
-			line.Sort (new PointComparer ())
-			Point AddP1 = new Point (-180, line [0].Y)
-			Point AddP2 = new Point (180, line [line.Count - 1].Y)
+func GetTwilightLineNow() *[]Point {
+	return GetTwilightLine(GetSunPosNow())
+}
 
-			line.Insert (0, AddP1)
-			line.Add (AddP2)
-			foreach (var p in line) {
-				//Console.WriteLine(p.X)
-				//Console.WriteLine(p.Y)
-				//Console.WriteLine(String.Format("x: {0}, y:{1}",p.X,p.Y))
+func GetTwilightLine(sunpos *Point) *[]Point {
+	var LonS, LatS, LonA, LonB, LatB, ANB, BN, sita float64
+	LonS = sunpos.X * PI / 180
+	LatS = -sunpos.Y * PI / 180
+	LonA = LonS - PI/2
+	line := []Point{}
+	for i := 0; i < 360; i++ {
+		sita = (float64(i) + 0.001) * PI / 180
+		BN = math.Acos(math.Sin(sita) * math.Cos(LatS)) //(0~pi之间)
+		danb := math.Sin(LatS) * math.Sin(sita) / math.Sin(BN)
+		ANB = math.Asin(danb) //(-pi/2 ~ pi/2之间)
+		if i > 90 && i < 270 {
+			LonB = LonA + PI - ANB
+			if LonB > PI {
+				LonB = LonB - 2*PI
 			}
 
-			return line
+			if LonB < -PI {
+				LonB = 2*PI + LonB
+			}
+			LatB = PI/2 - BN
+		} else {
+			LonB = LonA + ANB
+			LatB = PI/2 - BN
 		}
-	*/
+		c := Point{
+			X: LonB * 180 / PI,
+			Y: LatB * 180 / PI,
+		}
+		line = append(line, c)
+	}
+	//sort by x
+	sort.Slice(line, func(i, j int) bool {
+		return line[i].X > line[j].X
+	})
+	addP1 := line[len(line)-1]
+	addP2 := line[0]
+	midY := addP2.Y + (-180-addP2.X)*(addP1.Y-addP2.Y)/(addP1.X-addP2.X-360.0)
+	addP3 := Point{X: -180, Y: midY}
+	addP4 := Point{X: 180, Y: midY}
+
+	maxY := 90.0
+	if sunpos.Y > 0 {
+		maxY = -90
+	}
+	addP5 := Point{X: -180, Y: maxY}
+	addP6 := Point{X: 180, Y: maxY}
+
+	line = append(line, addP3)
+	line = append(line, addP5)
+	line = append(line, addP6)
+	line = append(line, addP4)
+	line = append(line, addP2)
+
+	return &line
 }

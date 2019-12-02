@@ -42,6 +42,6 @@ func GetTwilightPointsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	*/
 	points := GetTwilightPoints()
-	log.Println(*points)
+	//log.Println(*points)
 	json.NewEncoder(w).Encode(points)
 }
