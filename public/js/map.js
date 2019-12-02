@@ -1,9 +1,11 @@
 var map;
-var osm, twilightlayer, markerlayer, gaodelayer, binglayer;
+var osm, twilightlayer, customMarkerlayer,markerlayer, gaodelayer, binglayer;
+var customMarkerSource = new ol.source.Vector({});
 var markerSource = new ol.source.Vector({});
 var twilightSource = new ol.source.Vector({});
 var pointArray = [];
-var twilightStyle;
+var sunPosX, sunPosY;
+var twilightStyle, customMarkerStyle,markerStyle;
 function initMap() {
     //style
     twilightStyle = new ol.style.Style({
@@ -11,9 +13,33 @@ function initMap() {
             color: 'rgba(150,0,0,0)',
             width: 1
         }),
+        fill: new ol.style.Fill({
+            color: "rgba(150, 150, 150, 0.5)",
+        })
+    });
+
+    markerStyle = new ol.style.Style({
+        image: new ol.style.Circle({
+            radius: 8,
+            stroke: new ol.style.Stroke({
+                color: '#000'
+            }),
             fill: new ol.style.Fill({
-                color: "rgba(150, 150, 150, 0.5)",
+                color: "rgba(230, 0, 0, 0.5)",
             })
+        })
+    });
+
+    customMarkerStyle = new ol.style.Style({
+        image: new ol.style.Circle({
+            radius: 8,
+            stroke: new ol.style.Stroke({
+                color: '#000'
+            }),
+            fill: new ol.style.Fill({
+                color: "rgba(0, 230, 0, 0.5)",
+            })
+        })
     });
 
     var mousePositionControl = new ol.control.MousePosition({
@@ -48,50 +74,59 @@ function initMap() {
     });
     twilightlayer = new ol.layer.Vector({
         source: twilightSource,
-        style:twilightStyle
+        style: twilightStyle
     });
     markerlayer = new ol.layer.Vector({
-        source: markerSource
+        source: markerSource,
+        style: markerStyle
+    });
+    customMarkerlayer = new ol.layer.Vector({
+        source: customMarkerSource,
+        style: customMarkerStyle
     });
     //twilight points
     UpdateTwilightPoints()
-   
+
     map = new ol.Map({
         controls: ol.control.defaults({
-            /*
-            attributionOptions: ({
-                collapsible: false
-            })
-            */
         }).extend([mousePositionControl]),
         layers: [
             osm,
             gaodelayer,
             binglayer,
             twilightlayer,
-            markerlayer
+            markerlayer,
+            customMarkerlayer
         ],
         target: 'rcp1_map',
         view: new ol.View({
-            center: ol.proj.transform([0,0],
+            center: ol.proj.transform([0, 0],
                 'EPSG:4326', 'EPSG:3857'),
             zoom: 2
         })
     });
 }
 
-function UpdateTwilightPoints(){
+function UpdateTwilightPoints() {
+    fetch("/api/sunpos")
+        .then((resp) => resp.json()) // Transform the data into json
+        .then(function (data) {
+            // Create and append the li's to the ul
+            sunPosX = data.X
+            sunPosY = data.Y
+        })
+
     fetch("/api/points")
-   .then((resp) => resp.json()) // Transform the data into json
-   .then(function(data) {
-     // Create and append the li's to the ul
-     pointArray = [];
-     data.forEach(AddToTwilightPoints)
-     })
+        .then((resp) => resp.json()) // Transform the data into json
+        .then(function (data) {
+            // Create and append the li's to the ul
+            pointArray = [];
+            data.forEach(AddToTwilightPoints)
+        })
 }
 
 function AddToTwilightPoints(p) {
-    pointArray.push([p.X,p.Y])
+    pointArray.push([p.X, p.Y])
 }
 
 function LocatePoint() {
@@ -129,10 +164,25 @@ function ShowTrack() {
     //generate a line from pointSource
     var feature = new ol.Feature({
         geometry: new ol.geom.Polygon([pointArray]),
-        style:twilightStyle
+        style: twilightStyle
     });
     feature.getGeometry().transform('EPSG:4326', 'EPSG:3857');
     twilightSource.addFeature(feature);
+
+    AddSunPos()
+}
+
+function AddSunPos(){
+    var marker = new ol.Feature({
+        geometry: new ol.geom.Point(
+            ol.proj.transform(
+                [sunPosX,sunPosY],
+                'EPSG:4326', 'EPSG:3857')
+        ),
+        style:markerStyle
+    });
+
+    markerSource.addFeature(marker);
 }
 
 function AddMarkerPoint(lon, lat) {
@@ -166,16 +216,16 @@ function AddMarkerPoint(lon, lat) {
     });
 
     // Set style created earlier
-    marker.setStyle(style);
+    //marker.setStyle(style);
 
     // Assuming your layer / source is already map bound
     //var source = markerlayer.getSource();
     //source.addFeatures(marker);
-    markerSource.addFeature(marker);
+    customMarkerSource.addFeature(marker);
 }
 
 function ClearMarkerPoints() {
-    markerSource.clear();
+    customMarkerSource.clear();
 }
 
 function backgroundChange(e) {

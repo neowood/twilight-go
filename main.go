@@ -26,7 +26,15 @@ func UserRoutes() *mux.Router {
 	var router = mux.NewRouter()
 	router = mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/api/points", GetTwilightPointsHandler)
+	router.HandleFunc("/api/sunpos", GetSunPosHandler)
 	return router
+}
+
+func GetSunPosHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	sunpos := GetSunPosNow()
+	log.Println(*sunpos)
+	json.NewEncoder(w).Encode(sunpos)
 }
 
 func GetTwilightPointsHandler(w http.ResponseWriter, r *http.Request) {
