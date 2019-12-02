@@ -1,11 +1,18 @@
 package main
 
+import (
+	"fmt"
+	"time"
+)
+
 type Point struct {
-	X float32
-	Y float32
+	X float64
+	Y float64
+	Z float64
 }
 
 func GetTwilightPoints() *[]Point {
+	fmt.Println(GetSunPosNow())
 	p1 := Point{
 		X: 0,
 		Y: 0,
@@ -24,4 +31,13 @@ func GetTwilightPoints() *[]Point {
 	}
 	points := []Point{p1, p2, p3, p4}
 	return &points
+}
+
+func GetSunPosNow() *Point {
+	return GetSunPosByTime(time.Now().UTC())
+}
+
+func GetSunPosByTime(dt time.Time) *Point {
+	return GetSunPos(dt.Year(), int(dt.Month()), dt.Day(), dt.Hour(),
+		dt.Minute(), float64(dt.Second()))
 }
