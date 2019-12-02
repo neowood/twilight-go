@@ -1,0 +1,13 @@
+language: go
+go:          
+  - "1.13.4" 
+services:
+  - docker  
+
+
+install:
+  - docker build -t neowood/library/twilight .
+
+script:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker push neowood/library/twilight
