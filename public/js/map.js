@@ -19,6 +19,7 @@ function initMap() {
     });
 
     markerStyle = new ol.style.Style({
+        /*
         image: new ol.style.Circle({
             radius: 8,
             stroke: new ol.style.Stroke({
@@ -28,6 +29,11 @@ function initMap() {
                 color: "rgba(230, 0, 0, 0.5)",
             })
         })
+        */
+       image: new ol.style.Icon({
+        src: '../sun.png',
+        scale: 0.3
+      })
     });
 
     customMarkerStyle = new ol.style.Style({
@@ -187,10 +193,9 @@ function AddMarkerPoint(lon, lat) {
 }
 
 function RefreshPos() {
-    console.log("refreshing pos")
     ClearAll()
     UpdateTwilightPoints()
-    sleep(500).then(() => {
+    sleep(300).then(() => {
     ShowTwilightLine()
     ShowSunPos()
     })

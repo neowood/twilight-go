@@ -3,6 +3,7 @@ package main
 import (
 	"math"
 	"sort"
+	"github.com/labstack/gommon/log"
 )
 
 const EPOCH_JAN1_12H_2000 = 2451545.0
@@ -169,7 +170,11 @@ func GetSunPos(year, // i.e., 2004
 }
 
 func GetTwilightLineNow() *[]Point {
-	return GetTwilightLine(GetSunPosNow())
+	log.Info("updating twilight line data")
+	if len(twilightPoints) == 0 {
+		GetTwilightLine(GetSunPosNow())
+	}
+	return &twilightPoints
 }
 
 func GetTwilightLine(sunpos *Point) *[]Point {
@@ -226,5 +231,6 @@ func GetTwilightLine(sunpos *Point) *[]Point {
 	line = append(line, addP4)
 	line = append(line, addP2)
 
+	twilightPoints = line
 	return &line
 }

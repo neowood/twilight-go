@@ -10,12 +10,10 @@ type Point struct {
 	Z float64
 }
 
-func GetTwilightPoints() *[]Point {
-	return GetTwilightLineNow()
-}
-
 func GetSunPosNow() *Point {
-	return GetSunPosByTime(time.Now().UTC())
+	point := GetSunPosByTime(time.Now().UTC())
+	sunPosition = *point
+	return point
 }
 
 func GetSunPosByTime(dt time.Time) *Point {

@@ -8,6 +8,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
+var sunPosition Point
+var twilightPoints []Point
+
 func main() {
 	//Starting the API server
 	router := UserRoutes()
@@ -48,7 +51,7 @@ func GetTwilightPointsHandler(w http.ResponseWriter, r *http.Request) {
 		  return
 		}
 	*/
-	points := GetTwilightPoints()
+	points := GetTwilightLineNow()
 	//log.Println(*points)
 	json.NewEncoder(w).Encode(points)
 }
