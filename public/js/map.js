@@ -1,41 +1,19 @@
 var map;
-var timer;
-var refresh_time = 500, refresh_count = -1, max_refresh = 4;
-var osm, pathlayer, pointlayer, markerlayer, binglayer;
-var selectedFeature;
+var osm, twilightlayer, markerlayer, gaodelayer, binglayer;
 var markerSource = new ol.source.Vector({});
-var pathSource = new ol.source.Vector({});
-var pointSource = new ol.source.Vector({});
+var twilightSource = new ol.source.Vector({});
 var pointArray = [];
-var oldstyle, hiddenStyle, trackStyle;
+var twilightStyle;
 function initMap() {
     //style
-    trackStyle = new ol.style.Style({
-        image: new ol.style.Circle({
-            radius: 8,
-            stroke: new ol.style.Stroke({
-                color: '#000'
-            }),
+    twilightStyle = new ol.style.Style({
+        stroke: new ol.style.Stroke({
+            color: 'rgba(150,150,150,0.5)',
+            width:1
+        }),
             fill: new ol.style.Fill({
-                //color: "rgba(0, 230, 0, 0.5)",
-                color: "rgba(0, 230, 0, 1)",
+                color: "rgba(150, 150, 150, 0.5)",
             })
-        })
-    });
-
-    // invisible Style Vector Alpha
-    hiddenStyle = new ol.style.Style({
-        image: new ol.style.Circle({
-            radius: 8,
-            fill: new ol.style.Fill({
-                //color: 'rgba(200,200,0,1)'
-                color: 'yellow'
-            }),
-            stroke: new ol.style.Stroke({
-                //color: 'rgba(0,0,0,0)',
-                color: 'black',
-            })
-        })
     });
 
     var mousePositionControl = new ol.control.MousePosition({
@@ -68,39 +46,16 @@ function initMap() {
         preload: Infinity,
         source: new ol.source.OSM()
     });
-    pointlayer = new ol.layer.Vector({
-        source: pointSource
-    });
-    pathlayer = new ol.layer.Vector({
-        source: pathSource
+    twilightlayer = new ol.layer.Vector({
+        source: twilightSource,
+        style:twilightStyle
     });
     markerlayer = new ol.layer.Vector({
         source: markerSource
     });
     //twilight points
-    /*
-    fetch(
-        "/api/points"
-        , {
-            method: "GET",
-        }
-    ).then(
-        function (res) {
-            console.log(res);
-        },
-        function (e) {
-            console.log("Error submitting form!", e);
-        }
-    )
-    */
-   fetch("/api/points")
-   .then((resp) => resp.json()) // Transform the data into json
-   .then(function(data) {
-     // Create and append the li's to the ul
-     pointArray = [];
-     data.forEach(AddToTwilightPoints)
-     })
-
+    UpdateTwilightPoints()
+   
     map = new ol.Map({
         controls: ol.control.defaults({
             /*
@@ -113,8 +68,7 @@ function initMap() {
             osm,
             gaodelayer,
             binglayer,
-            pointlayer,
-            pathlayer,
+            twilightlayer,
             markerlayer
         ],
         target: 'rcp1_map',
@@ -124,6 +78,16 @@ function initMap() {
             zoom: 2
         })
     });
+}
+
+function UpdateTwilightPoints(){
+    fetch("/api/points")
+   .then((resp) => resp.json()) // Transform the data into json
+   .then(function(data) {
+     // Create and append the li's to the ul
+     pointArray = [];
+     data.forEach(AddToTwilightPoints)
+     })
 }
 
 function AddToTwilightPoints(p) {
@@ -147,12 +111,12 @@ function LocatePoint() {
     //zoom to point
     var lon = parseFloat(lonlat[0]);
     var lat = parseFloat(lonlat[1]);
-    CenterAt(lon, lat);
+    //CenterAt(lon, lat);
     AddMarkerPoint(lon, lat);
 }
 
 function ClearTrackPoints() {
-    pathSource.clear();
+    twilightSource.clear();
     pointSource.clear();
     pointArray = [];
 }
@@ -164,19 +128,11 @@ function ClearPointLayer() {
 function ShowTrack() {
     //generate a line from pointSource
     var feature = new ol.Feature({
-        geometry: new ol.geom.LineString(pointArray)
+        geometry: new ol.geom.Polygon([pointArray]),
+        style:twilightStyle
     });
     feature.getGeometry().transform('EPSG:4326', 'EPSG:3857');
-
-    feature.setStyle(
-        new ol.style.Style({
-            stroke: new ol.style.Stroke({
-                color: [0, 0, 200, 0.8],
-                width: 10
-            })
-        })
-    );
-    pathSource.addFeature(feature);
+    twilightSource.addFeature(feature);
 }
 
 function AddMarkerPoint(lon, lat) {
