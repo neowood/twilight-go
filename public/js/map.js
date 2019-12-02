@@ -87,14 +87,13 @@ function initMap() {
 
     //twilight points
     RefreshPos();
-
     map = new ol.Map({
         controls: ol.control.defaults({
         }).extend([mousePositionControl]),
         layers: [
             osm,
-            //gaodelayer,
-            //binglayer,
+            gaodelayer,
+            binglayer,
             twilightlayer,
             markerlayer,
             customMarkerlayer
@@ -106,7 +105,10 @@ function initMap() {
             zoom: 2
         })
     });
+}
 
+function sleep (time) {
+    return new Promise((resolve) => setTimeout(resolve, time));
 }
 
 function CenterAt(lon,lat)
@@ -138,7 +140,6 @@ function UpdateTwilightPoints() {
 function AddToTwilightPoints(p) {
     twilightPointArray.push([p.X, p.Y])
 }
-
 
 function ClearTwilightPoints() {
     twilightSource.clear();
@@ -189,8 +190,10 @@ function RefreshPos() {
     console.log("refreshing pos")
     ClearAll()
     UpdateTwilightPoints()
+    sleep(500).then(() => {
     ShowTwilightLine()
     ShowSunPos()
+    })
 }
 
 function ClearAll() {
