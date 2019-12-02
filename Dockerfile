@@ -12,8 +12,8 @@ RUN go build
 
 FROM alpine:3.9
 RUN apk add --no-cache bash tzdata
-COPY --from=builder /public /
-COPY --from=builder /twilight-go /
+COPY --from=builder /twilight-go/public /
+COPY --from=builder /twilight-go/twilight-go /
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 WORKDIR /
 CMD ["/twilight-go"]
