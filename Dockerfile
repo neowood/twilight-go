@@ -8,7 +8,7 @@ FROM build_base AS builder
 # Here we copy the rest of the source code
 COPY . .
 # And compile the project
-RUN go build
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -ldflags '-extldflags "-static"'  -o twilight-go
 
 FROM alpine:3.9
 RUN apk add --no-cache bash tzdata
