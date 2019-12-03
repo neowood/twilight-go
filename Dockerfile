@@ -12,7 +12,8 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -ldflags '-extldflags "-st
 
 FROM alpine:3.9
 RUN apk add --no-cache bash tzdata
-COPY --from=builder /twilight-go/public /
+RUN mkdir /public
+COPY --from=builder /twilight-go/public /public
 COPY --from=builder /twilight-go/twilight-go /
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 WORKDIR /
