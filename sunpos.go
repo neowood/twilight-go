@@ -3,7 +3,6 @@ package main
 import (
 	"math"
 	"sort"
-	"github.com/labstack/gommon/log"
 )
 
 const EPOCH_JAN1_12H_2000 = 2451545.0
@@ -19,7 +18,7 @@ const XKMPER = 6378.135
 
 var lon1, lat1, alt1 float64
 
-func IsLeapYear(y int) bool {
+func isLeapYear(y int) bool {
 	return (y%4 == 0 && y%100 != 0) || (y%400 == 0)
 }
 
@@ -27,7 +26,7 @@ func sqr(x float64) float64 {
 	return (x * x)
 }
 
-func JulianDate(year, // i.e., 2004
+func julianDate(year, // i.e., 2004
 	mon, // 1..12
 	day, // 1..31
 	hour, // 0..23
@@ -38,7 +37,7 @@ func JulianDate(year, // i.e., 2004
 	F1 := int((275.0 * mon) / 9.0)
 	F2 := int((mon + 9.0) / 12.0)
 
-	if IsLeapYear(year) {
+	if isLeapYear(year) {
 		// Leap year
 		N = F1 - F2 + day - 30
 	} else {
@@ -62,18 +61,18 @@ func JulianDate(year, // i.e., 2004
 	return NewYears + dblDay
 }
 
-func Mod(a, b float64) float64 {
+func mod(a, b float64) float64 {
 	return math.Mod(a, b)
 }
 
 func toGMST(m_Date float64) float64 {
-	UT := Mod(m_Date+0.5, 1.0)
+	UT := mod(m_Date+0.5, 1.0)
 	TU := (m_Date - EPOCH_JAN1_12H_2000 - UT) / 36525.0
 
 	GMST := 24110.54841 + TU*
 		(8640184.812866+TU*(0.093104-TU*6.2e-06))
 
-	GMST = Mod(GMST+SEC_PER_DAY*OMEGA_E*UT, SEC_PER_DAY)
+	GMST = mod(GMST+SEC_PER_DAY*OMEGA_E*UT, SEC_PER_DAY)
 
 	if GMST < 0.0 {
 		GMST += SEC_PER_DAY // "wrap" negative modulo value
@@ -84,7 +83,7 @@ func toGMST(m_Date float64) float64 {
 
 func toGeo(eci *Point, gmst float64) *Point {
 	theta := math.Atan2(eci.Y, eci.X)
-	lon := Mod(theta-gmst, 2*PI)
+	lon := mod(theta-gmst, 2*PI)
 
 	if lon < 0.0 {
 		lon += (2 * PI) // "wrap" negative modulo
@@ -133,15 +132,15 @@ func GetSunPos(year, // i.e., 2004
 	twopi := 2.0 * PI
 	deg2rad := PI / 180.0
 	var tut1, meanlong, ttdb, meananomaly, eclplong, obliquity, magr, dbi, dbj, dbk float64
-	jul := JulianDate(year, mon, day, hour, min, sec) //UTC time
+	jul := julianDate(year, mon, day, hour, min, sec) //UTC time
 	gmst := toGMST(jul)
 
 	tut1 = (jul - 2451545.0) / 36525.0
 	meanlong = 280.460 + 36000.77*tut1
-	meanlong = Mod(meanlong, 360.0)
+	meanlong = mod(meanlong, 360.0)
 	ttdb = tut1
 	meananomaly = 357.5277233 + 35999.05034*ttdb
-	meananomaly = Mod(meananomaly*deg2rad, twopi)
+	meananomaly = mod(meananomaly*deg2rad, twopi)
 	if meananomaly < 0.0 {
 		meananomaly += twopi
 	}
@@ -167,14 +166,6 @@ func GetSunPos(year, // i.e., 2004
 	}
 
 	return toGeo(&eciPoint, gmst)
-}
-
-func GetTwilightLineNow() *[]Point {
-	log.Info("updating twilight line data")
-	if len(twilightPoints) == 0 {
-		GetTwilightLine(GetSunPosNow())
-	}
-	return &twilightPoints
 }
 
 func GetTwilightLine(sunpos *Point) *[]Point {
@@ -231,6 +222,5 @@ func GetTwilightLine(sunpos *Point) *[]Point {
 	line = append(line, addP4)
 	line = append(line, addP2)
 
-	twilightPoints = line
 	return &line
 }

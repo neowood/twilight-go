@@ -8,8 +8,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var sunPosition Point
-var twilightPoints []Point
+var sunPosition *Point
+var twilightPoints *[]Point
 
 func main() {
 	//Starting the API server
@@ -28,15 +28,27 @@ func main() {
 func UserRoutes() *mux.Router {
 	var router = mux.NewRouter()
 	router = mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/api/points", GetTwilightPointsHandler)
-	router.HandleFunc("/api/sunpos", GetSunPosHandler)
+	router.HandleFunc("/api/twilight", GetTwilightPointsJsonHandler)
+	router.HandleFunc("/api/sunpos", GetSunPosJsonHandler)
 	return router
+}
+
+func GetSunPosJsonHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	sunpos := GetSunPosJsonNow()
+	json.NewEncoder(w).Encode(sunpos)
 }
 
 func GetSunPosHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	sunpos := GetSunPosNow()
 	json.NewEncoder(w).Encode(sunpos)
+}
+
+func GetTwilightPointsJsonHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	points := GetTwilightLineJsonNow()
+	json.NewEncoder(w).Encode(points)
 }
 
 func GetTwilightPointsHandler(w http.ResponseWriter, r *http.Request) {
@@ -52,6 +64,5 @@ func GetTwilightPointsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	*/
 	points := GetTwilightLineNow()
-	//log.Println(*points)
 	json.NewEncoder(w).Encode(points)
 }
