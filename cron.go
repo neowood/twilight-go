@@ -18,5 +18,5 @@ func init() {
 func UpdateTwilightLine() {
 	log.Info("schedule for updating")
 	sunPosition = GetSunPosByTime(time.Now().UTC())
-	GetTwilightLine(sunPosition)
+	twilightPoints = GetTwilightLine(sunPosition)
 }
