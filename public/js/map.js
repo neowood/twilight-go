@@ -1,13 +1,29 @@
 var map;
-var osm, twilightlayer, customMarkerlayer,markerlayer, gaodelayer, binglayer;
+var osm, twilightlayer, lonlatlayer, customMarkerlayer, markerlayer, gaodelayer, binglayer;
 var customMarkerSource = new ol.source.Vector({});
 var markerSource = new ol.source.Vector({});
 var twilightSource = new ol.source.Vector({});
 var twilightPointArray = [];
 var sunPosX, sunPosY;
-var twilightStyle, customMarkerStyle,markerStyle;
+var twilightStyle, customMarkerStyle, markerStyle, lonlatStyle, dotlineStyle;
 function initMap() {
     //style
+    lonlatStyle = new ol.style.Style({
+        stroke: new ol.style.Stroke({
+              color: 'rgba(0, 230, 0, 1)',
+              width: 5
+        })
+    });
+
+    dotlineStyle = new ol.style.Style({
+        stroke: new ol.style.Stroke({
+            width: 1.5,
+            color: 'rgba(50, 50, 50, 1)',
+            lineDash: [.1, 5] //or other combinations
+        }),
+        zIndex: 2
+    })
+
     twilightStyle = new ol.style.Style({
         stroke: new ol.style.Stroke({
             color: 'rgba(150,0,0,0)',
@@ -19,21 +35,10 @@ function initMap() {
     });
 
     markerStyle = new ol.style.Style({
-        /*
-        image: new ol.style.Circle({
-            radius: 8,
-            stroke: new ol.style.Stroke({
-                color: '#000'
-            }),
-            fill: new ol.style.Fill({
-                color: "rgba(230, 0, 0, 0.5)",
-            })
+        image: new ol.style.Icon({
+            src: '../sun.png',
+            scale: 0.3
         })
-        */
-       image: new ol.style.Icon({
-        src: '../sun.png',
-        scale: 0.3
-      })
     });
 
     customMarkerStyle = new ol.style.Style({
@@ -82,6 +87,10 @@ function initMap() {
         source: twilightSource,
         style: twilightStyle
     });
+    lonlatlayer = new ol.layer.Vector({
+        source:  new ol.source.Vector({}),
+        style: dotlineStyle
+    });
     markerlayer = new ol.layer.Vector({
         source: markerSource,
         style: markerStyle
@@ -90,6 +99,9 @@ function initMap() {
         source: customMarkerSource,
         style: customMarkerStyle
     });
+
+    //lonlat
+    AddLonLat()
 
     //twilight points
     RefreshPos();
@@ -100,6 +112,7 @@ function initMap() {
             osm,
             gaodelayer,
             binglayer,
+            lonlatlayer,
             twilightlayer,
             markerlayer,
             customMarkerlayer
@@ -108,43 +121,65 @@ function initMap() {
         view: new ol.View({
             center: ol.proj.transform([0, 0],
                 'EPSG:4326', 'EPSG:3857'),
-            zoom: 2
+            zoom: 2.2
         })
     });
 }
 
-function sleep (time) {
-    return new Promise((resolve) => setTimeout(resolve, time));
+function AddLonLat() {
+    // Your loctations
+    var locations = [];
+    /*
+    for(let i = -90; i　<=90 ; i+=10) {
+        locations.push([[-180,i],[180,i]])
+    }
+    for(let i = -180; i　<=180 ; i+=15) {
+        locations.push([[i,-90],[i,90]])
+    }
+    */
+   locations.push([[-180,23.4367],[180,23.4367]])
+   locations.push([[-180,-23.4367],[180,-23.4367]])
+
+    var polyline = new ol.geom.MultiLineString(locations);
+    // Coordinates need to be in the view's projection, which is
+    // 'EPSG:3857' if nothing else is configured for your ol.View instance
+    polyline.transform('EPSG:4326', 'EPSG:3857');
+
+    var feature = new ol.Feature({
+        geometry: polyline,
+        style: dotlineStyle 
+    })
+    var source = lonlatlayer.getSource()
+    source.addFeature(feature);
 }
 
-function CenterAt(lon,lat)
-{
-    var zoom=map.getView().getZoom();
-    map.getView().setCenter(ol.proj.transform([lon,lat],
+function CenterAt(lon, lat) {
+    var zoom = map.getView().getZoom();
+    map.getView().setCenter(ol.proj.transform([lon, lat],
         'EPSG:4326', 'EPSG:3857'));
     map.getView().setZoom(zoom);
 }
 
-function UpdateTwilightPoints() {
+function RefreshPos() {
+    ClearAll()
     fetch("/api/sunpos")
         .then((resp) => resp.json()) // Transform the data into json
         .then(function (data) {
             // Create and append the li's to the ul
             sunPosX = data.X
             sunPosY = data.Y
+            ShowSunPos()
         })
 
     fetch("/api/points")
         .then((resp) => resp.json()) // Transform the data into json
         .then(function (data) {
-            // Create and append the li's to the ul
             twilightPointArray = [];
-            data.forEach(AddToTwilightPoints)
+            data.forEach(function (p) {
+                twilightPointArray.push([p.X, p.Y])
+            })
+            ShowTwilightLine()
         })
-}
-
-function AddToTwilightPoints(p) {
-    twilightPointArray.push([p.X, p.Y])
 }
 
 function ClearTwilightPoints() {
@@ -166,14 +201,14 @@ function ShowTwilightLine() {
     twilightSource.addFeature(feature);
 }
 
-function ShowSunPos(){
+function ShowSunPos() {
     var marker = new ol.Feature({
         geometry: new ol.geom.Point(
             ol.proj.transform(
-                [sunPosX,sunPosY],
+                [sunPosX, sunPosY],
                 'EPSG:4326', 'EPSG:3857')
         ),
-        style:markerStyle
+        style: markerStyle
     });
 
     markerSource.addFeature(marker);
@@ -192,14 +227,6 @@ function AddMarkerPoint(lon, lat) {
     customMarkerSource.addFeature(marker);
 }
 
-function RefreshPos() {
-    ClearAll()
-    UpdateTwilightPoints()
-    sleep(300).then(() => {
-    ShowTwilightLine()
-    ShowSunPos()
-    })
-}
 
 function ClearAll() {
     ClearTwilightPoints();
