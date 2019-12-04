@@ -14,7 +14,7 @@ function initMap() {
     var lonlatStyle= new ol.style.Style({
         stroke: new ol.style.Stroke({
             width: 0.5,
-            color: 'rgba(50, 50, 50, 1)'
+            color: 'rgba(250, 0, 0, 1)'
         }),
         zIndex: 2
     })
