@@ -129,6 +129,7 @@ func GetSunPos(year, // i.e., 2004
 	hour, // 0..23
 	min int, // 0..59
 	sec float64 /* = 0.0 */) *Point { // 0..(59.999999...)
+
 	twopi := 2.0 * PI
 	deg2rad := PI / 180.0
 	var tut1, meanlong, ttdb, meananomaly, eclplong, obliquity, magr, dbi, dbj, dbk float64
@@ -181,17 +182,18 @@ func GetTwilightLine(sunpos *Point) *[]Point {
 		ANB = math.Asin(danb) //(-pi/2 ~ pi/2之间)
 		if i > 90 && i < 270 {
 			LonB = LonA + PI - ANB
-			if LonB > PI {
-				LonB = LonB - 2*PI
-			}
-
-			if LonB < -PI {
-				LonB = 2*PI + LonB
-			}
 			LatB = PI/2 - BN
 		} else {
 			LonB = LonA + ANB
 			LatB = PI/2 - BN
+		}
+		//ajust LonB
+		if LonB > PI {
+			LonB = LonB - 2*PI
+		}
+
+		if LonB < -PI {
+			LonB = 2*PI + LonB
 		}
 		c := Point{
 			X: LonB * 180 / PI,

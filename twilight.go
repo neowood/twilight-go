@@ -33,7 +33,7 @@ func GetSunPosByTime(dt time.Time) *Point {
 		dt.Minute(), float64(dt.Second()))
 }
 
-func GetTwilightLineNow() *[]Point {
+func getTwilightLineNow() *[]Point {
 	log.Info("updating twilight line data")
 	if twilightPoints == nil {
 		twilightPoints = GetTwilightLine(GetSunPosNow())
@@ -42,7 +42,7 @@ func GetTwilightLineNow() *[]Point {
 }
 
 func GetTwilightLineJsonNow() *geojson.Feature {
-	points := GetTwilightLineNow()
+	points := getTwilightLineNow()
 	var segmentPoints [][]float64
 	for _, p := range *points {
 		segmentPoints = append(segmentPoints, []float64{p.X, p.Y})

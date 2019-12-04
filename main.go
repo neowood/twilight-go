@@ -50,19 +50,3 @@ func GetTwilightPointsJsonHandler(w http.ResponseWriter, r *http.Request) {
 	points := GetTwilightLineJsonNow()
 	json.NewEncoder(w).Encode(points)
 }
-
-func GetTwilightPointsHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	/*
-		params := mux.Vars(r)
-		for _, item := range posts {
-		  if item.ID == params["id"] {
-			json.NewEncoder(w).Encode(item)
-			break
-		  }
-		  return
-		}
-	*/
-	points := GetTwilightLineNow()
-	json.NewEncoder(w).Encode(points)
-}
