@@ -175,7 +175,7 @@ func GetTwilightLine(sunpos *Point) *[]Point {
 	LatS = -sunpos.Y * PI / 180
 	LonA = LonS - PI/2
 	line := []Point{}
-	for i := 0; i < 360; i++ {
+	for i := 0.0; i < 360.0; i += 0.5 {
 		sita = (float64(i) + 0.001) * PI / 180
 		BN = math.Acos(math.Sin(sita) * math.Cos(LatS)) //(0~pi之间)
 		danb := math.Sin(LatS) * math.Sin(sita) / math.Sin(BN)
@@ -207,7 +207,7 @@ func GetTwilightLine(sunpos *Point) *[]Point {
 	})
 	addP1 := line[len(line)-1]
 	addP2 := line[0]
-	midY := addP2.Y + (-180-addP2.X)*(addP1.Y-addP2.Y)/(addP1.X-addP2.X-360.0)
+	midY := addP2.Y + (180-addP2.X)*(addP1.Y-addP2.Y)/(addP1.X-addP2.X+360.0)
 	addP3 := Point{X: -180, Y: midY}
 	addP4 := Point{X: 180, Y: midY}
 
