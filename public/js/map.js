@@ -1,5 +1,5 @@
 var map;
-var osm, twilightlayer, lonlatlayer, sunlayer;
+var osm, twilightlayer,capricornlayer, lonlatlayer, sunlayer;
 function initMap() {
     //style
     var dotlineStyle = new ol.style.Style({
@@ -7,6 +7,14 @@ function initMap() {
             width: 1.5,
             color: 'rgba(50, 50, 50, 1)',
             lineDash: [.1, 5] //or other combinations
+        }),
+        zIndex: 2
+    })
+
+    var lonlatStyle= new ol.style.Style({
+        stroke: new ol.style.Stroke({
+            width: 0.5,
+            color: 'rgba(50, 50, 50, 1)'
         }),
         zIndex: 2
     })
@@ -38,6 +46,10 @@ function initMap() {
     });
     lonlatlayer = new ol.layer.Vector({
         source: new ol.source.Vector({}),
+        style: lonlatStyle
+    });
+    capricornlayer = new ol.layer.Vector({
+        source: new ol.source.Vector({}),
         style: dotlineStyle
     });
     sunlayer = new ol.layer.Vector({
@@ -51,6 +63,7 @@ function initMap() {
     map = new ol.Map({
         layers: [
             osm,
+            capricornlayer,
             lonlatlayer,
             twilightlayer,
             sunlayer,
@@ -68,7 +81,20 @@ function initMap() {
 }
 
 function AddLonLat() {
-    // Your loctations
+    //lon, lat, Equator
+    var equator= [];
+    equator.push([[-180, 0], [180, 0]])
+    var equatorline = new ol.geom.MultiLineString(equator);
+    // Coordinates need to be in the view's projection, which is
+    // 'EPSG:3857' if nothing else is configured for your ol.View instance
+    equatorline.transform('EPSG:4326', 'EPSG:3857');
+
+    var equatorfeature = new ol.Feature({
+        geometry: equatorline
+    })
+    lonlatlayer.getSource().addFeature(equatorfeature);
+
+    //capricorns
     var locations = [];
     locations.push([[-180, 23.4367], [180, 23.4367]])
     locations.push([[-180, -23.4367], [180, -23.4367]])
@@ -81,7 +107,7 @@ function AddLonLat() {
     var feature = new ol.Feature({
         geometry: polyline
     })
-    var source = lonlatlayer.getSource()
+    var source = capricornlayer.getSource()
     source.addFeature(feature);
 }
 
